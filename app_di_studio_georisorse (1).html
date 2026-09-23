@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App di Studio - Georisorse</title>
+    <!-- Tailwind CSS per lo stile -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-answer { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-answer { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .correct-missed { background-color: #f0fdf4 !important; border-color: #4ade80 !important; border-style: dashed !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 selection:bg-blue-200">
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+        
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">📚 Studio Georisorse</h1>
+            <p class="text-slate-500">Studia le domande a blocchi per memorizzarle meglio.</p>
+        </header>
+
+        <!-- VIEW 1: Selezione Livelli -->
+        <div id="view-levels" class="fade-in block">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-xl font-semibold mb-4 text-slate-800">Seleziona un settore di studio</h2>
+                <p class="text-sm text-slate-500 mb-6">Le domande totali sono state divise in gruppi da massimo 20. I livelli non indicano la difficoltà, ma servono a segmentare lo studio per assicurarti di vederle tutte.</p>
+                
+                <div id="levels-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- I bottoni dei livelli verranno generati qui via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Quiz -->
+        <div id="view-quiz" class="fade-in hidden">
+            <!-- Barra di navigazione interna -->
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showLevels()" class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors">
+                    <span>&larr;</span> Torna ai livelli
+                </button>
+                <div class="text-sm font-semibold bg-blue-100 text-blue-800 px-3 py-1 rounded-full" id="quiz-progress-text">
+                    Domanda 1 / 20
+                </div>
+            </div>
+
+            <!-- Barra di progresso -->
+            <div class="w-full bg-slate-200 rounded-full h-2.5 mb-8">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 5%"></div>
+            </div>
+
+            <!-- Contenitore Domanda -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2" id="question-id">F0 - Domanda X</div>
+                <h3 class="text-xl font-medium text-slate-900 mb-6 leading-relaxed" id="question-text">
+                    Testo della domanda...
+                </h3>
+
+                <!-- Opzioni -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Le opzioni verranno generate qui -->
+                </div>
+            </div>
+
+            <!-- Controlli post-risposta -->
+            <div id="quiz-controls" class="flex justify-end hidden fade-in">
+                <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+                    Prossima Domanda <span>&rarr;</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Risultati -->
+        <div id="view-results" class="fade-in hidden text-center">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+                <div class="text-6xl mb-6">🎉</div>
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">Settore completato!</h2>
+                <p class="text-lg text-slate-600 mb-8">Hai risposto correttamente a <strong id="score-correct" class="text-green-600">0</strong> su <strong id="score-total">20</strong> domande.</p>
+                
+                <div class="flex justify-center gap-4">
+                    <button onclick="retryLevel()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-6 rounded-xl transition-colors">
+                        Ripeti questo livello
+                    </button>
+                    <button onclick="showLevels()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-sm transition-colors">
+                        Scegli un altro livello
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DATI XML (Incollati direttamente dalla tua richiesta) -->
+    <script type="text/xml" id="xml-data">
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="category">
+    <category>
+      <text>$course$/Modulo di Georisorse</text>
+    </category>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. La roccia madre è:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Una roccia in cui vengono intrappolate apprezzabili quantità di petrolio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Una roccia in cui si rinvengono apprezzabili quantità di idrocarburi.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Una roccia da cui si generano apprezzabili quantità di idrocarburi.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Quali metalli si trovano in un deposito epitermale?]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Au, Ag, Cu.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Au, Mo, Sn.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Au, W, Ni.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[In un corpo mineralizzato ipotetico, si presentano mineralizzazioni con solfuri di Zn (sfalerite), solfuri di Pb (galena) + quarzo in una roccia dolomitica. La dolomite rappresenta:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[La ganga.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[La host rock (roccia incassante).]]></text></answer>
+    <answer fraction="0"><text><![CDATA[L’ore mineral (minerale di interesse economico).]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare le condizioni principali per la genesi degli idrocarburi secondo il processo di stagnazione:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Upwelling in zone oceaniche, produzione di fitoplancton e zooplancton nella zona eufotica, deposizione sul fondo di gusci di materia organica morta, stratificazione delle acque e diagenesi in ambiente riducente.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Circolazione di correnti profonde di acqua fredda verso le basse latitudini in ambiente oceanico, Incontro di rilievi marini, Risalita di acque ricche di nutrienti verso la superfice, Formazione di una zona di ossigenazione in mare aperto, produzione di fitoplancton e zooplancton, Incontro tra queste acque con aree continentali, deposizione di gusci di sostanza organica morta + sedimenti sulla scarpata continentale e diagenesi in ambiente riducente.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Presenza di Bacini limitati, scambi limitati con mare aperto, stratificazione delle acque, differente salinità tra acque superficiali e acque di fondo, sedimentazione di materia organica morta sul fondo e diagenesi in ambiente riducente.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Heap-leach, ammonia leach, HPAL e Bayer process sono:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Metodologie differenti di idrometallurgia.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Diversi nomi per indicare la stessa tecnica di idrometallurgia.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I BIF e le Ironstone oolitiche:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono entrambi depositi sedimentari di ferro di origine chimica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono entrambi tipi di depositi antichi, precipitati non dopo il Precambriano.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le risposte precedenti sono esatte.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente esclusivamente giacimenti legati a processi endogeni:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Porphyry copper, cromiti stratiformi, bauxiti, epitermali ad oro.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Bauxiti, Placers, evaporiti a litio, lateriti Ni-Co.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Diamanti kimberlitici, cromiti stratiformi, Skarn, SEDEX.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 11</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. I … sono fonti di energia …. che si sviluppano per processi di …. e successiva …… della materia organica nel corso delle ere geologiche. Sono costituiti principalmente da …. i quali hanno sviluppato legami più o meno stabili nel tempo.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Combustibili fossili, rinnovabile, trasporto, weathering, C e H.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Giacimenti evaporitici, non rinnovabili, seppellimento, weathering, Fe e S.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Combustibili fossili, non rinnovabile, seppellimento, diagenesi, C e H.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 12</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. Il metodo ... è un tipo di coltivazione in … che consiste nel coltivare il corpo minerario lasciando dei pilastri di supporto e creando quindi delle camere (cioè gli spazi vuoti coltivati). È un metodo ... Può essere utilizzato per corpi mineralizzati …. , orizzontali o poco inclinati con mineralizzazioni di ….. competenza. Può portare a fenomeni di …. In superfice]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Cut and fill, sotterraneo, supportato, discontinui, medio-alta, subsidenza.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Room and pillar, superfice, supportato, discontinui, medio-bassa, crolli.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Room and pillar, sotterraneo, non supportato, continui, medio-alta, subsidenza.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. I depositi tipo …… sono depositi ….. che si formano per weathering ….. di rocce contenenti mineralizzazioni primarie ad opera di agenti …. quali acqua, vento, ghiaccio etc. Durante il trasporto, I minerali economici subiscono una selezione meccanica In base alla loro…. e resistenza, accumulandosi in ambienti in ambienti…. continentali.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Placers, detritici, fisico, erosivi, densità, sedimentari.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Placers, evaporitici, fisico, erosivi, composizione, magmatici.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Evaporitico, detritici, chimico, esogeni, densità, sedimentari.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. Le ... sono minerali industriali che si formano in condizioni di alta ... e bassa…. Esse possono formarsi sia per processi idrotermali che diagenetici. La loro struttura aperta determina forti proprietà adsorbenti e desorbenti che ne permettono l’uso come agenti disidratanti e …. Inoltre vengono utilizzati anche nell’industria petrolchimica come …… per il ...]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Zeoliti, alcalinità, temperatura, scambiatori cationici, catalizzatori, cracking.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Argille, alcalinità, pressione, modificatori di struttura, catalizzatori, fracking.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Zeoliti, acidità, temperatura, modificatori di struttura, assorbenti, cracking.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[Sulla base di una prospezione geologica e geochimica di un deposito a solfuri di Zn e di Pb, ne conosco la sua posizione geografica, la mineralizzazione ed una stima del tenore. Siamo davanti ad una:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Risorsa indicata.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[riserva provata.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[risorsa misurata.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F0 - Domanda 17</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. L’acronimo VMS:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Indica depositi idrotermali associati a rocce sedimentarie.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Indica depositi idrotermali associati a magmatismo nella crosta continentale.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Indica depositi idrotermali associati a magmatismo di fondo oceanico.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. I depositi …. si formano per weathering…. Essi sono il risultato di processi di idrolisi dei minerali di rocce ... quali duniti e peridotiti. Si formano in climi……ad …. piovosità.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Lateritici, fisico, felsiche, tropicali, bassa.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Lateritici, chimico, ultramafiche, tropicali, alta.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Bauxitici, chimico, felsiche, temperate, bassa.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare quali tra le seguenti sono forme di weathering chimico:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Dissoluzione, Ossidazione, idrolisi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Erosione, disgregazione, trasporto.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le precedenti sono opzioni corrette.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[In un corpo mineralizzato ipotetico, si presentano vene di quarzo + oro + pirite che tagliano rocce dolomitiche. Il quarzo rappresenta:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[La ganga.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[La host rock (roccia incassante).]]></text></answer>
+    <answer fraction="0"><text><![CDATA[L’ore mineral (minerale di interesse economico).]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 5</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le mineralizzazioni tipo Skarn e CRD:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono la stessa cosa.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Entrambe hanno una roccia carbonatica come host rock.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono mineralizzazioni che si formano dalla cristallizzazione di magmi intrusivi.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la risposta corretta. Torba, Lignite e Antracite:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono tre forme di carboni con diverse età di maturazione della materia organica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si sviluppano per diagenesi della materia organica post-seppellimento.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Entrambe le risposte precedenti sono corrette.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Comminuzione, separazione per taglia e concentrazione sono fasi del:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Metallurgy.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Mining.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Processing.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. La differenza tra riserve e risorsa:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono due termini diversi per indicare la stessa cosa.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[É definita in base ai risultati degli studi geologici, geochimici, mineralogici e dalle condizioni sociali economiche e politiche.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Le risorse sono masse minerarie economicamente coltivabili, le riserve sono masse mineralizzate considerate potenzialmente coltivabili.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 11</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione. I depositi tipo cromite…. si formano a partire da magmi…. associati a fenomeni di …. Si formano per cristallizzazione in strutture tipo …. Tali depositi sono stratiformi con strati molto ….e…. paralleli ai differenti livelli magmatici.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Stratiforme, evoluti, plume mantle, dicco, disomogenei, continui.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Podiforme, primitivi, subduzione, camera magmatica, omogenei, discontinui.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Stratiforme, primitivi, plume mantle, camera magmatica, omogenei, continui.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 12</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione. Il metodo … è un tipo di coltivazione in … che consiste nel coltivare il corpo minerario tramite rimozione del materiale parallelamente al fronte di scavo. L’area di scavo viene definita “….” ed ha generalmente di larghezza e lunghezza … ai 100 m. Il processo di scavo è interamente … con macchinari capaci di avanzare nel fronte di scavo e supportare completamente il tetto dello scavo tramite appositi supporti idraulici. Questo metodo viene utilizzato per rocce incassanti e corpi mineralizzati con competenza bassa e forma …, stratiforme e … generalmente con giaciture orizzontali o poco inclinate.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Longwall stoping, sotterraneo, panel, superiore, automatizzato, tabulare, omogenea.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Room and pillar, superfice, panel, inferiore, manuale, tabulare, discontinua.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Longwall stoping, sotterraneo, stope, inferiore, automatizzato, verticale, omogenea.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione. I depositi tipo …… si formano per precipitazione di fluidi idrotermali in rocce …. Le mineralizzazioni sono ……. alla deposizione dei sedimenti e si presentano come corpi mineralizzati generalmente …. e stratiformi.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[SHMS, magmatiche, singenetiche, discontinui.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[SEDEX, sedimentarie, singenetiche, continui.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[SEDEX, sedimentarie, epigenetiche, discontinui.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Il gesso è:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Un minerale industriale di origine evaporitica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Un minerale metallico di origine evaporitica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Un minerale industriale di origine magmatica.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F1 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’affermazione esatta: il cut-off:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[È strettamente dipendente dalla stabilità politica, e dalle condizioni ambientali.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Può variare in base ai prezzi di mercato e agli sviluppi tecnologici.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle due affermazioni precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente esclusivamente giacimenti legati a processi endogeni:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Cromiti podiformi, MVT, BIF, CRD.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[BIF, bauxiti, cromiti stratiformi, greisens.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Cromiti podiformi, MVT, VHMS, epitermali ad Au.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>Le argille sono minerali … composti principalmente da minerali quali: clorite, illite, … e smectite. Le argille vengono utilizzate in molti settori, come quello della ceramica grazie alla loro …… Vengono utilizzate anche nell’industria edilizia come……. o per la fabbricazione di laterizi e maioliche. Altri campi sono la cosmetica, l’industria della carta, dove il… è ampiamente usato.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Metallici, feldspato, plasticità, legante idraulico, magnesio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Industriali, feldspato, flessibilità, legante elettrico, caolino.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Industriali, caolinite, plasticità, legante idraulico, caolino.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. L’elettrowinning e l’elettrorefining:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono due tecniche di elettrometallurgia completamente differenti.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Sono due tecniche di elettrometallurgia molto simili nel processo ma utilizzati in due steps di raffinamento differenti.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le opzioni precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[In un corpo mineralizzato ipotetico, si presentano mineralizzazioni con solfuri di Zn (sfalerite), solfuri di Pb (galena) + Solfuro di Fe (pirite)+quarzo. Il quarzo rappresenta:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[La ganga.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[La host rock (roccia incassante).]]></text></answer>
+    <answer fraction="0"><text><![CDATA[L’ore mineral (materiale sterile).]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. In una cava si coltivano:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Torbe, sabbie, argille, cementi, marmi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Petrolio, gemme, minerali metallici (galena, sfalerite).]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le opzioni sono giuste.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>I depositi di arricchimento ... si formano per weathering ... a spese di mineralizzazioni ... con contenuti abbondanti di solfuri In climi …. dotati con … stagionalità. I minerali economici che si formano sono generalmente (idr)ossidi, carbonati, silicati, solfati e fosfati metalliferi.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Supergenico, chimico, primarie, temperato-umidi, alta.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Ipogenico, chimico, secondarie, caldo-umidi, alta.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Supergenico, fisico, primarie, caldo-umidi, bassa.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[???Sulla base di una prospezione geologica e geochimica di un deposito a solfuri di Zn e di Pb, ne conosco il tipo di mineralizzazione ed il tenore. Siamo davanti a:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Riserva probabile.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Risorsa indicata.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Risorsa misurata.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 12</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le cromiti podiformi:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Possono trovarsi in successioni ofiolitiche.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono depositi discontinui.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Entrambe le precedenti affermazioni sono esatte.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>I depositi tipo…. Si formano in ambienti … di tipo fluviale, lacustre o deltaico e sono costituiti principalmente da ematite e…. o siderite e... I depositi più antichi sono Paleoproterozoici, i più giovani sono….]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Ironstone oolitici, sedimentari, chamosite, chamosite, recenti.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[BIF, sedimentari, chamosite, magnetite, Precambriani.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Ironstone oolitici, idrotermali, cassiterite, chamosite, Cambriani.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>La fusione o “...” è un trattamento di …. eseguito a temperature …. al punto di fusione dei metalli. Durante tale trattamento si produce una fase detta …. arricchita in metallo ed una fase ricca di ganga detta …. entrambe presenti allo stato……]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Smelting, idrometallurgia, inferiori, matte, slag, solido.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Froth, pirometallurgia, superiori, slag, matte, liquido.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Smelting, pirometallurgia, superiori, matte, slag, liquido.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[Cosa hanno in comune calcopirite, cubanite, covellite, calcocite, sfalerite, galena?]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono tutti minerali solfuri.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono tutti minerali di Cu.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono composti da basse % di Ni e Co.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 17</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le mineralizzazioni tipo Porfiri Cu-Mo precipitano da fluidi idrotermali di graniti tipo:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[A e/o M.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[S e/o M.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F2 - Domanda 18</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I termini pillar, stope, drawpoints, caving si ritrovano nell’ambito di:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Coltivazione in superfice.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Coltivazione in sotterraneo.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le cromiti stratiformi:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono depositi discontinui ed irregolari.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Si trovano in intrusioni magmatiche che con strati a mineralogia differente.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si trovano in successioni obdotte di crosta oceanica.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Il processo di riabilitazione dell’area di coltivazione con il fine di minimizzare e mitigare gli effetti delle attività estrattive e reinstallare gli ecosistemi originari viene definito:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Mine reparation.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Mine reclamation.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>Il metodo … è un tipo di coltivazione in … di tipo …. che consiste nel coltivare il corpo minerario tramite rimozioni orizzontali di porzioni mineralizzate usando successive detonazioni di esplosivo. Il materiale ottenuto viene rimosso. In seguito l’area di scavo viene riempita con del materiale che può essere costituito da fanghi e acqua o fanghi e cemento o anche dal materiale di scarto dello scavo (“ ….” ). Tale operazione è definita … e serve a creare il pavimento di supporto per le operazioni successive. È un metodo utilizzato per mineralizzazioni con competenza …. generalmente verticali e/o inclinate e con distribuzione …]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Cut and fill, sotterraneo, non supportato, ganga, refill, medio bassa, omogenea.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Cut and fill, sotterraneo, supportato, waste, backfill, medio-alta, irregolare.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Room and pillar, superficiale, supportato, waste, refill, medio bassa, omogenea.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 5</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le mineralizzazioni tipo black sands.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono depositi tipo placers.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono i minerali precipitati dai black smokers.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono minerali con una densità molto bassa e per tale motivo vengono trasportati in ambienti sedimentari.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>I materiali di scarto proveniente dal …. sono definiti …. Essi raccolgono tutto il materiale di ganga proveniente dalla separazione e dalla concentrazione. Si presentano come laghi artificiali costituiti da fanghiglia le cui particelle sono di dimensione …. Spesso, contengono concentrazioni elevate di elementi ……. nocivi quali …., arsenico e …..]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Metallurgy, tailings, grossolana, metallici, piombo, silice.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Processing, Tailings, finissima, metallici, piombo, mercurio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Processing, feeds, finissima, nobili, calcio, mercurio.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Magnetite, Calcopirite, Bornite sono mineralizzazioni tipiche di:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Depositi tipo VHMS.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Depositi tipo Skarn.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Depositi tipo epitermali.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente esclusivamente giacimenti legati a processi esogeni:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Diamanti kimberlitici, smeraldi, MVT, cromiti stratiformi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[REEs in argille, BIF, evaporiti a Li, cromiti stratiformi.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[REEs in argille, bauxiti, BIF, paleoplacers.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 11</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare le condizioni principali per la genesi degli idrocarburi secondo il processo di zona di minima ossigenazione:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Upwelling in zone oceaniche, produzione di fitoplancton e zooplancton nella zona eufotica, deposizione sul fondo di gusci di materia organica morta, stratificazione delle acque e diagenesi in ambiente riducente.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Circolazione di correnti profonde di acqua fredda verso le basse latitudini in ambiente oceanico, Incontro di rilievi marini, Risalita di acque ricche di nutrienti verso la superfice, Formazione di una zona di ossigenazione in mare aperto, produzione di fitoplancton e zooplancton, Incontro tra queste acque con aree continentali, deposizione di gusci di sostanza organica morta + sedimenti sulla scarpata continentale e diagenesi in ambiente riducente.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Presenza di Bacini limitati, scambi limitati con mare aperto, stratificazione delle acque, differente salinità tra acque superficiali e acque di fondo, sedimentazione di materia organica morta sul fondo e diagenesi in ambiente riducente.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. L’idrolisi è:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Un processo di weathering chimico in cui si ha dissoluzione dei minerali solubili in soluzioni acquose e formazione di materiale residuo insolubile.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Un processo di weathering fisico in cui si ha disgregazione dei minerali grazie all’azione dell’acqua e trasporto delle particelle in sospensione come detrito.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle risposte precedenti è corretta.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Etano, metano, propano e butano:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono tutti gas naturali.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono tutte risorse di energia non convenzionali.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono nomi diversi per indicare uno stesso tipo di gas.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[???Sulla base di una prospezione geologica e geochimica di un deposito tipo porfiri Cu-Mo, ne conosco Il tipo di mineralizzazione, una stima del tenore ed una stima del profitto. Siamo davanti a:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Risorsa misurata.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Riserva probabile.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Risorsa indicata.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F3 - Domanda 17</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione.<br>I depositi tipo …… si formano per precipitazione di fluidi idrotermali in rocce …. Le mineralizzazioni sono ……. alla deposizione dei sedimenti e si presentano come corpi mineralizzati di taglia medio-piccola e……]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[MVT, carbonatiche, epigenetiche, stratabound.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[VMS, sedimentarie, singenetiche, stratabound.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[MVT, carbonatiche, singenetiche, stratiformi.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente esclusivamente giacimenti legati a processi esogeni:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[LREEs in carbonatiti, epitermali a bassa sulfidazione, MVT, VHMS.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Placers, SEDEX, bauxiti, Cu-supergenico.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi di arricchimento supergenico possono portare ad elevate concentrazioni di metalli quali:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Cu, Pb, Zn.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Ni, Co, Au.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Al, Mn, Ni.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi della Dora Baltea sono:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Depositi detritici sedimentari. L’oro detritico è stato trasportato a valle da ghiacciai formatisi durante le glaciazioni.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Depositi idrotermali di tipo epitermale. L’oro è associato a vene di quarzo tipo vuggy in prossimità di ghiacciai.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare i fattori che possono condizionare la coltivabilità di un giacimento:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Quantità di materiale sterile, omogeneità di un corpo minerario, tessitura dei minerali, instabilità politica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Presenza di materiale sterile, tempistica del processing, tipologia di deposito, durezza dei minerali.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Presenza di materiale sterile, omogeneità di un corpo minerario, tipologia di deposito, tempistica del processing.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>Il Carbone è un …. formatosi per rapido seppellimento e successiva … in condizioni …. della materia organica in zone costiere ….. dove la quantità di vegetazione è abbondante ed il seppellimento è favorito da oscillazioni rapide del livello delle acque marine. Le condizioni più favorevoli per la formazione di elevate quantità di carbone si rinvengono nel ... sebbene esistano carboni più giovani. Ne sono un esempio torba e ….]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Idrocarburo, diagenesi, ossidanti, paludose, Carbonifero, Litantrace.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Combustibile fossile, diagenesi, riducenti, paludose, Carbonifero, lignite.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Combustibile fossile, weathering, riducenti, glaciali, Giurassico, lignite.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Lisciviazione, separazione solido-liquido e purificazione sono metodologie di trattamento metallurgico di:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Pirometallurgia.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Idrometallurgia.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Elettrometallurgia.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 11</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>I depositi …. sono depositi sedimentari di origine…che si formano in bacini marini, lacustri e oceanici con ... ricambio di acque. Il processo di deposizione è più veloce ed efficace in climi…. La precipitazione dei minerali avviene per …… delle brine ad opera di processi di forte ……]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Evaporitici, chimica, basso, aridi, saturazione, evaporazione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Residuali, chimica, alto, tropicali, ebollizione, evaporazione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Residuali, magmatica, basso, aridi, saturazione, lisciviazione.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 13</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le Brine sono:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Fluidi ad alta Temperatura e bassa salinità.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Fluidi ad alta temperatura e alta salinità.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le risposte precedenti sono valide.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>I depositi tipo cromite…. si formano da magmi…. associati a fenomeni di ….. . Si formano per cristallizzazione in strutture tipo …. E presentano una tessitura lenticolare. I depositi presentano distribuzione … e sono spesso raggruppati in….]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Podiforme, primitivi, plume mantle, dicco, discontinua, cluster.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Podiforme, evoluti, subduzione, camera magmatica, discontinua, cluster.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Stratiforme, primitivi, plume mantle, dicco, continua, strati.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I termini Bench, Slope, pit, Stripping ratio si ritrovano nell’ambito di:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Coltivazione in superfice.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Coltivazione in sotterraneo.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Coltivazione in superfice ed in sotterraneo.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F4 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[Sulla base di una prospezione geologica e geochimica di un deposito a solfuri di Zn e di Pb, ne conosco Il tipo di mineralizzazione, una stima del tenore ed una stima del profitto. Siamo davanti a:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Riserva probabile.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Risorsa indicata.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Risorsa misurata.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi di origine idrotermale:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Si formano per precipitazione di fluidi di alta temperatura e salinità medio-alta.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano per precipitazione di fluidi di origine magmatica o di acque connate.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Entrambe le precedenti affermazioni sono esatte.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente esclusivamente giacimenti legati a processi esogeni:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Cromiti stratiformi, PGE in intrusioni ultramafiche, CRD, MVT.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Greisens, Skarn, Porfyri Cu-Mo, BIF.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Lateriti Ni-Co, Evaporiti Li, oolitic ironstones, black sands.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[Cosa hanno in comune ematite, pirite, magnetite e goethite?]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono tutti minerali di Fe.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono tutti solfuri di Fe.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 5</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la risposta corretta. Le mineralizzazioni tipo Porfiri Cu-Mo precipitano da fluidi idrotermali di graniti tipo:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[I e M.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Solo S.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Solo I.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Nei depositi tipo laterite e bauxite si riscontra una zonazione geochimica dei corrispettivi profili. Qual è la principale causa?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Elementi diversi si concentrano in zone del profilo differenti poiché sono preesistenti nelle corrispettive zone prima del processo di weathering.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Elementi diversi si concentrano in zone del profilo differenti in base alla loro solubilità e mobilità.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Elementi diversi si concentrano in zone del profilo differenti perché sottoposti a differenti condizioni di pressione e temperatura.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione.<br>La … è un processo di separazione che comporta l’uso di…. e sostanze …. per separare i minerali metallici utili dalla ganga. Esso sfrutta le proprietà …. delle particelle di minerale solide immerse in un liquido in cui si riconoscono: componenti …, che vengono portate in sospensione da bolle d’aria o di gas in superfice formando una schiuma con densità inferiore al liquido stesso e componenti …. che invece precipitano sul fondo creando una miscela detta …. con densità maggiore rispetto al liquido.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Flottazione, gas, tensioattive, superficiali, aerofile, idrofile, torbida.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Flottazione, gas, chimiche, fisiche, aerofile, idrofobe, froth.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Calcinazione, gas, tensioattive, superficiali, aerofobe, idrofile, torbida.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 8</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l’opzione contenente solo i minerali industriali.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Carbone, uranio, pirite, galena.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Smeraldo, gesso, cemento, sfalerite.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Ghiaia, feldspato, argilla, caolino.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la risposta corretta. I depositi idrotermali in rocce sedimentarie:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Precipitano da fluidi di medio-alta salinità e temperature <250°C.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Precipitano da fluidi di a bassa salinità e temperature >250°C.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti opzioni è corretta.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[Un giacimento con smeraldi è detto:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Di metalli nobili.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Di metalli ferrosi.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 11</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione.<br>Le …… sono rocce ……. di natura…. Che si trovano principalmente in diatremi vulcanici. Esse possono costituire le host rock di …. Se si formano in determinate condizioni di P/T.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Carbonatiti, magmatiche, felsica, wolframite.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Kimberliti, sedimentarie, ultramafica, cassiterite.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Kimberliti, magmatiche, ultramafica, diamanti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 13</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi di cromite:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Si formano da magmi intrusivi associati a plume mantle.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano da magmi intrusivi associati a fusione del mantello in subduzione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano da magmi intrusivi associati a fusione della crosta continentale.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare quale è tra le seguenti associazioni mineralogiche, quella tipica dei depositi epitermali ad alta sulfidazione:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Vuggy quarzo, alunite, caolinite.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Quarzo, adularia, sericite, carbonati.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Vuggy quarzo, adularia, sericite, caolinite.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I combustibili fossili:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Non comprendono il petrolio poiché è considerato come idrocarburo.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono fonti di energia rinnovabile.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Nessuna delle precedenti è corretta.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[???Si dice risorsa misurata quando:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Ho una stima del tenore e ne conosco il tipo di mineralizzazione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Non ho una stima del tenore ma conosco il tipo di mineralizzazione.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Conosco il tenore e la mineralizzazione.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>F5 - Domanda 18</text></name>
+    <questiontext format="html"><text><![CDATA[???Indicare la sequenza di termini corretta per completare la definizione.<br>La … è il processo di decomposizione della sostanza organica che porta alla formazione del …. La ……. è il processo che porta alla degradazione termica del kerogene e alla formazione di …. liquidi e gassosi. Le T e le P in questa fase stabilizzano … La …. è un processo che porta ad un ulteriore aumento della T e della P. A queste condizioni il …. è più stabile dell’…]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Diagenesi, kerogene, catagenesi, idrocarburi, olio, metagenesi, gas, olio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Diagenesi, petrolio, metagenesi, combustibili fossili, olio, catagenesi, gas, olio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Catagenesi, kerogene, catagenesi, idrocarburi, gas, metagenesi, olio, gas.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Si definiscono elementi economici di co-product quelli che:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Elementi che si riscontrano spesso in depositi primari e ne aumentano il valore.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Possono essere coltivati con prezzi di estrazione elevati.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Possono essere coltivati con prezzi di estrazione bassi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sottoprodotti di lavorazione dei minerali primari]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Quale delle seguenti affermazioni descrive correttamente un giacimento di tipo VMS (Volcanogenic Massive Sulphide)?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Si forma per metasomatismo di rocce carbonatiche a contatto con intrusioni magmatiche]]></text></answer>
+    <answer fraction="0"><text><![CDATA[È tipico di ambienti epitermali superficiali, con concentrazione dei metalli per boiling e dominanza di Au-Ag.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[È associato a sistemi idrotermali sottomarini legati a vulcanismo, con mineralizzazioni stratiformi ricche in solfuri di Cu-Zn-Pb]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si forma in ambiente continentale arido, è dominato da fluidi magmatici acidi e presenta alterazione avanzata argillica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[È legato a intrusioni granitiche profonde con mineralizzazione di Sn e W]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. le REEs:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono raramente usate per la costruzione di componenti elettroniche di alta tecnologia]]></text></answer>
+    <answer fraction="0"><text><![CDATA[le ritroviamo facilmente concentrate in giacimenti monomineralici]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Sono diffuse nella crosta terrestre ma in basse concentrazioni e di difficile estrazione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono scarsamente diffuse sulla crosta terrestre.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[I depositi superficiali detritici (placers) si formano principalmente:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Per disgregazione fisica della roccia sorgente ed erosione, seguite da selezione idraulica che concentra i minerali ad alta densità in ambienti fluviali, deltizi o marini ad alta energia.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Per alterazione chimica intensa in climi caldo-umidi, con lisciviazione dei cationi mobili e concentrazione residua di Al e Fe.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Per precipitazione chimica di minerali metallici da fluidi idrotermali in ambienti a bassa energia.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[per alterazione idrotermale di rocce carbonatiche]]></text></answer>
+    <answer fraction="0"><text><![CDATA[per precipitazione da brine saline in ambienti desertici]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 5</text></name>
+    <questiontext format="html"><text><![CDATA[Riempi gli spazi con i termini esatti: I giacimenti di tipo ... si formano per ... in prossimità del contatto con intrusioni magmatiche di rocce ... e sono caratterizzati da associazioni di minerali calc-silicatici, mentre le mineralizzazioni di tipo ... sono legate a intrusioni alcaline a composizione intermedia-felsica e mostrano mineralizzazione di ...-Mo, Au. disseminata e in ... su grandi volumi di rocce idrotermalmente alterate.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[porphyry, metasomatismo, carbonatiche, skarn, ultramafiche, Pb, vene]]></text></answer>
+    <answer fraction="0"><text><![CDATA[VMS, fusione, carbonatiche, skarn, calcoalcaline, Ni, brecce]]></text></answer>
+    <answer fraction="100"><text><![CDATA[skarn, metasomatismo, carbonatiche, porphyry, calc-alcaline, Cu, vene]]></text></answer>
+    <answer fraction="0"><text><![CDATA[skarn, diagenesi, granitiche, porphyry, basaltiche, Cu, brecce]]></text></answer>
+    <answer fraction="0"><text><![CDATA[porphyry, metamorfismo, carbonatiche, skarn, calc-alcaline, Cu, geodi]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi di origine magmatica:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[si formano per precipitazione di minerali da fluidi idrotermali a bassa temperatura in fratture della crosta terrestre]]></text></answer>
+    <answer fraction="0"><text><![CDATA[si formano per arricchimento secondario dovuto a processi supergeni legati all'alterazione superficiale]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Si formano in per raffreddamento del magma in un corpo magmatico intrusivo.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano esclusivamente per alterazione delle rocce da fluidi che essolvono dal magma.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano per raffreddamento e cristallizzazione della lava dopo un'eruzione vulcanica.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le mineralizzazioni tipo Porfiri Cu-Mo:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[la mineralogia principale è con solfuri di Cu e Mo]]></text></answer>
+    <answer fraction="100"><text><![CDATA[le affermazioni precedenti sono corrette.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono spesso associati a giacimenti epitermali]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si formano all'interno della crosta continentale in prossimità delle zone di subduzione.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono associate a fluidi idrotermali magmatici di corpi intrusivi granitici all'interno della crosta continentale.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 8</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la sequenza di termini corretta per completare la definizione. I depositi tipo... si formano per weathering. Essi sono il risultato di processi di idrolisi di minerali di rocce.... quali graniti e granitoidi. Si formano in climi.... ad .... piovosità.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Bauxite, fisico, ultrafemiche, tropicali, bassa.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Bauxite, chimico, felsiche, tropicali, alta.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[laterite, fisico, mafiche, tropicali, bassa]]></text></answer>
+    <answer fraction="0"><text><![CDATA[laterite, chimico, magiche, tropicali, bassa]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Evaporite, chimico, felsiche, aridi, bassa.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l'associazione di termini corretta:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Singenetico-stratiforme-SHMS/SEDEX.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle associazioni è corretta]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le associazioni sono corrette.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Singenetico-stratiforme-MVT.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[stratiforme-podiforme-SEDEX]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 12</text></name>
+    <questiontext format="html"><text><![CDATA[Quale delle seguenti combinazioni rappresenta correttamente gli elementi essenziali di un petroleum system?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Magma, cristallizzazione, deformazione, metamorfismo]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Roccia sorgente, roccia serbatoio, roccia di copertura, trappola, migrazione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Trappola, faglia, piega, metamorfismo, dissoluzione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Roccia sorgente, migrazione, pressione litostatica]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Roccia serbatoio, erosione, sedimentazione, subduzione]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Completa con i termini giusti. La ... di un deposito (cioè le specie mineralogiche di interesse economico presenti, come ad esempio, solfuri) influenza in modo determinante sia la percentuale di elemento utile che si riesce a recuperare effettivamente dalla roccia, detta ... sia il tipo di trattamento necessario per ottenere il minerale utile, indicato come ... ed il metallo finito a partire dal minerale di partenza, indicato come ... Specie mineralogiche differenti hanno composizioni diverse e quindi presentano percentuali diverse di metallo. Inoltre, minerali differenti sono suscettibili a differenti trattamenti... Es. il ... di rame (calcopirite CuFeS2) subisce un processo di trattamento molto diverso rispetto i ... di rame (es. Malachite, Cu(CO3)(OH)2).]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[tessitura, resa, fusione, raffinazione, fisiche, ossido, silicati]]></text></answer>
+    <answer fraction="0"><text><![CDATA[chimica, processing, recovery, metallurgy, chimiche, solfati, carbonati]]></text></answer>
+    <answer fraction="100"><text><![CDATA[mineralogia, recovery, processing, metallurgy, chimiche, solfuri, carbonati]]></text></answer>
+    <answer fraction="0"><text><![CDATA[composizione, purezza, flottazione, estrazione, molecolari, solfuri, cloruri]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Chimica, recovery, processing, metallurgi, chimiche, solfuri, idrossidi]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Un giacimento con di solfuri di Zn, Pb è detto:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Metalli di base.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[metalli ferrosi]]></text></answer>
+    <answer fraction="0"><text><![CDATA[terre rare]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Metalli nobili.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 16</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare le caratteristiche necessarie di una roccia serbatoio:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Alta Porosità primaria e secondaria interconnessa, alta permeabilità.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Elevata resistenza meccanica senza fratturazione o microfratture]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Tutte le risposte precedenti sono corrette.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Presenza di minerali altamente reattivi che sigillano i pori nel tempo]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Bassa porosità primaria e alta porosità secondaria non interconnessa bassa permeabilità.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 17</text></name>
+    <questiontext format="html"><text><![CDATA[Quali sono i principali ambienti tettonici associati alla formazione di giacimenti idrotermali e magmatici?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Bacini sedimentari intracratonici e piattaforme carbonatiche passive, dominati da processi diagenetici.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Margini convergenti (archi magmatici e zone di subduzione), ambienti intraplacca con magmatismo alcalino e province magmatiche estese.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[aree craniche con stabilità tettonica]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Ambienti glaciali e periglaciali, caratterizzati da erosione meccanica e trasporto detritico.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuno delle precedenti]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 20</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l'opzione contenente solo le georisorse rinnovabili:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Zeoliti, galena, petrolio, carbone.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Energia solare, Energia eolica, Energia delle maree, Energia idroelettrica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Energia Nucleare, metano, biocarburante, Energia delle maree]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Tutte le precedenti sono valide]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Energia nucleare, energia solare, energia eolica, energia idroelettrica.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila B - Domanda 22</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare tra le seguenti, l'opzione solo le georisorse non rinnovabili:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[tutte le precedenti sono valide]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Energia solare, Energia eolica, Energia delle maree, Energia idroelettrica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Acqua, petrolio, diamanti, calcopirite.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Petrolio, carbone, diamante, calcopirite.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 20</text></name>
+    <questiontext format="html"><text><![CDATA[Quali sono i minerali di ferro più comuni presenti nelle Banded Iron Formations (BIF)?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Feldspati e miche]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Ematite e magnetite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Gesso e anidrite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Calcite e dolomite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Pirite e galena]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 21</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi detritici:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[I minerali di interesse economico derivano dall'erosione di una roccia mineralizzata e vengono trasportati dagli stessi agenti erosivi prima di accumularsi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[BIF e Lateriti appartengono a questa categoria]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Possono contenere concentrazioni importanti di minerali a bassa densità.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[MVT e SEDEX appartengono a questa categoria]]></text></answer>
+    <answer fraction="0"><text><![CDATA[I detriti sono formati per accumulo di residui dell'alterazione chimica di rocce preesistenti.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 22</text></name>
+    <questiontext format="html"><text><![CDATA[Completa con i termini esatti: La coltivabilità di un deposito minerario dipende non solo da fattori geologici, ma anche da fattori ... Tra i fattori ... rientrano la latitudine, l'altitudine e la ... del territorio, nonché la posizione rispetto a ... e ... I fattori economici includono la ... del metallo e i prezzi, oltre ai costi di produzione, distinguibili in ... e ... Infine, i fattori geopolitici e sociali comprendono la stabilità socio-politica dell'area.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[geografici, locali, geografici, morfologici, parchi, aree protette, volatilità, operation, manutenzione]]></text></answer>
+    <answer fraction="100"><text><![CDATA[geografici, economici, geografici, morfologia, centri abitati, aree protette, domanda, operation, capital]]></text></answer>
+    <answer fraction="0"><text><![CDATA[morfologici, locali, mondiali, posizione, centri abitati, stabilità, operation, gestione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[morfologici, economici, geografici, posizione, centri abitati, scuole]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 23</text></name>
+    <questiontext format="html"><text><![CDATA[Completa con i termini esatti: I giacimenti tipo placer si formano per processi ... che concentrano minerali ... provenienti da rocce ... Questi depositi si trovano tipicamente in ambienti ... e presentano una distribuzione ...]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[metamorfici; instabili; profonde; desertici; uniforme]]></text></answer>
+    <answer fraction="0"><text><![CDATA[idrotermali; solubili; vulcaniche; marini profondi; discontinua]]></text></answer>
+    <answer fraction="100"><text><![CDATA[sedimentari; pesanti; preesistenti; fluviali o costieri; selettiva]]></text></answer>
+    <answer fraction="0"><text><![CDATA[magmatici; leggeri; intrusive; montani; casuale]]></text></answer>
+    <answer fraction="0"><text><![CDATA[biologici; organici; sedimentarie; lacustri; omogenea]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 24</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Il carbone, le rocce bituminose, le pietre preziose, l'oro e i minerali metallici di vario tipo si coltivavano in:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Entrambe.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Miniera.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Cava.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila E - Domanda 26</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare il tipo di Kerogene più adatto alla formazione di olio:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Tipo II: sostanza vegetale con poca cellulosa]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Tutte le opzioni sono valide.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Tipo I: origine prevalentemente da alghe e batteri, alto H/C.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle opzioni è valida]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Tipo II: origine prevalentemente da alghe, medio-alto H/C.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 1</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[I Giacimenti epitermali sono di origine magmatica]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Le mineralizzazioni del Bushveld sono di origine magmatica.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Le lateriti si formano da protoliti silicici]]></text></answer>
+    <answer fraction="0"><text><![CDATA[BIF sono di origine epitermale]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Entrambe le precedenti affermazioni sono valide.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 2</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare l'opzione contenente solo i minerali non metallici.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Zeolite, gesso, diamante, talco]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Pirite, rubini, petrolio, uranio]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Gesso, feldspato, calcopirite, galena]]></text></answer>
+    <answer fraction="0"><text><![CDATA[acantite, molibdenite, pyrite, calcopirite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[galena, magnetite, gesso, diamante]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 3</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Oil shales, oil sands, gas shale, tight shale:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Sono nomi diversi per indicare uno stesso tipo di risorsa]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Oil sands sono rocce ricche in carbone, oil shales contengono gas naturale libero, e gas shale e tight shale non richiedono tecniche particolari di estrazione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Oil shales e oil sands sono entrambi costituiti da petrolio liquido facilmente estraibile, mentre gas shale e tight shale sono rocce ad alta permeabilità]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Sono tutte risorse energetiche non convenzionali]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle opzioni precedenti è valida]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 4</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. L'ilmenite, il rutilo, la magnetite e la cassiterite:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[si trovano in paragenesi in giacimenti di tipo porphyry copper]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono minerali che si ossidano in ambiente supergenico]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono minerali di Pb e Zn precipitati da fluidi idrotermali in ambiente marino]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Sono minerali ad alta densità che possono trovarsi nelle black sands]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono minerali a solfuri di rame che possono trovarsi in letti fluviali]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 6</text></name>
+    <questiontext format="html"><text><![CDATA[Le cromiti podiformi sono tipicamente associate a quale ambiente geodinamico e contesto petrologico?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[zone di subduzione e archi vulcanici]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Granitoidi calcoalcalini associati a margini continentali attivi]]></text></answer>
+    <answer fraction="0"><text><![CDATA[zone di subduzione ed archi di isole vulcaniche]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Complessi stratiformi mafici-ultramafici di grandi dimensioni, formatisi in ambienti intracratonici]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Peridotiti del mantello superiore e si trovano in ofioliti]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[Quale delle seguenti combinazioni di caratteristiche è tipica di un sistema epitermale ad alta sulfidazione (high sulphidation)?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Fluidi basici ricchi in carbonati, origine sedimentaria e alterazione con calcite e dolomite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Fluidi neutri-poveri in zolfo, origine meteoritica e alterazione con adularia e sericite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Fluidi neutri, poveri in zolfo, dominati da acque meteoriche, alterazione quarzo-adularia-sericite-carbonati]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Fluidi acidi, ricchi in zolfo, di prevalente origine magmatica, con alterazione quarzo-alunite-caolinite-pirofillite]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 10</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Nei depositi di laterite possono esserci concentrazioni importanti di vari elementi metallici dipendentemente dalla roccia incassante. Questi sono:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Pb, Zn]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Ni, Co]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Al, Fe]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Cu, Mo]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. II Merensky Reef è:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Un livello mineralizzato a PGE all'interno di uno strato di cromiti podiformi]]></text></answer>
+    <answer fraction="0"><text><![CDATA[una piattaforma carbonatica arricchita in MVT]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Un livello mineralizzato a Oro nelle BIF]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Un livello mineralizzato a PGE in livelli di cromite all'interno del Bushveld Complex]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Riempi gli spazi con i termini giusti: I giacimenti epitermali auriferi ad alta solfidazione si formano in sistemi geotermici in cui fluidi idrotermali caldi e ... provenienti direttamente da ... e diluito dalle acque meteoriche, mentre i giacimenti a bassa solfidazione si sviluppano in sistemi in cui il fluido magmatico viene ... e diluito dalle acque sotterranee, con ... del pH in profondità.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[basici, intrusioni, molto, raffreddato, acidificazione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti]]></text></answer>
+    <answer fraction="0"><text><![CDATA[acidi, effusioni, molto, raffreddato, acidificazione]]></text></answer>
+    <answer fraction="100"><text><![CDATA[acidi, intrusioni, non, raffreddato, neutralizzazione]]></text></answer>
+    <answer fraction="0"><text><![CDATA[basici, intrusioni, molto, raffreddato, neutralizzazione]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 19</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Le kimberliti:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Tutte le kimberliti possono essere diamantifiere]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Possono essere diamantifiere solo se associate a zone dove la litosfera crostale è molto spessa]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Possono essere diamantifiere solo se associate a magmatismo di dorsale oceanica]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono rocce entro le quali cristallizzano i diamanti durante il raffreddamento]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono rocce molto diffuse ultrasiliciche]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 20</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. Il petrolio, il gas naturale ed il carbone:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Sono tre forme di combustibili fossili non rinnovabili]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono composti prevalentemente da silicati e ossidi metallici]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Si originano solo in ambienti desertici aridi]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono tre forme di idrocarburi non rinnovabili]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Non hanno nulla in comune]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 21</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I depositi tipo BIF:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[hanno un'età che è compresa tra l'Archeano e il Paleoproterozoico]]></text></answer>
+    <answer fraction="100"><text><![CDATA[le opzioni precedenti sono esatte]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono stratificati con selce]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono formati principalmente da ematite e magnetite]]></text></answer>
+    <answer fraction="0"><text><![CDATA[si sono formati in ere geologiche in cui l'atmosfera era riducente]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 22</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta. I Black Smokers sono:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Fluidi idrotermali da cui precipitano solfuri massicci di tipo VMS]]></text></answer>
+    <answer fraction="0"><text><![CDATA[La manifestazione superficiale in ambiente atmosferico dell'attività di fluidi idrotermali magmatici]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Fluidi idrotermali che essolvono dal magma responsabili della formazione di giacimenti tipo Skarn]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Effusioni di magma di mantello sul fondale oceanico]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Emissioni di gas in atmosfera associate a centri vulcanici]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila C - Domanda 23</text></name>
+    <questiontext format="html"><text><![CDATA[Riempi gli spazi con i termini esatti: La grafite è il ... del diamante, di ... pressione, hanno la stessa composizione chimica (...), ma differiscono per la struttura: nella grafite gli atomi sono disposti in forma ... nel diamante formano una struttura tridimensionale, responsabile della sua elevata ...]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[isotopo, alta, silice, amorfa, cubica, densità]]></text></answer>
+    <answer fraction="0"><text><![CDATA[composto, media, ossigeno, molecolare, lineare, fragilità]]></text></answer>
+    <answer fraction="100"><text><![CDATA[polimorfo, bassa, carbonio, cristallina, cubica, durezza]]></text></answer>
+    <answer fraction="0"><text><![CDATA[elementare, tetragonale, durezza]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila D - Domanda 7</text></name>
+    <questiontext format="html"><text><![CDATA[Indicare la risposta corretta:]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Nella roccia serbatoio si generano gli idrocarburi, nella roccia madre si accumulano gli idrocarburi, la roccia di copertura è l'insieme di rocce permeabili e impermeabili che bisogna perforare per l'estrazione del petrolio.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Nella roccia madre si generano gli idrocarburi, nella roccia serbatoio si accumulano gli idrocarburi, la roccia di copertura è una roccia impermeabile che non permette la dispersione degli idrocarburi.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Nella roccia madre e nella roccia serbatoio si genera il petrolio e la roccia di copertura è un cumulo che fa da tappo/tappeto per la dispersione del petrolio.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nessuna delle precedenti è esatta]]></text></answer>
+    <answer fraction="0"><text><![CDATA[tutte le precedenti sono esatte]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila D - Domanda 15</text></name>
+    <questiontext format="html"><text><![CDATA[Gli acronimi SEDEX, SHMS e MVT indicano depositi:]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[Prevalentemente a solfuri di Zn, Pb.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[prevalentemente a fosfati di REES]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Prevalentemente a solfuri di Cu, Mo.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[prevalentemente a solfuri di rame e molibdeno]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Prevalentemente a ossidi di Zn, Pb.]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila D - Domanda 18</text></name>
+    <questiontext format="html"><text><![CDATA[Riempi gli spazi con i termini giusti: Le ... sono rocce magmatiche ultrafemiche potassiche, altamente alcaline e ricche in elementi ... Sono costituite principalmente da olivina, sono sottosature in silice quindi il ... è assente. Esse rappresentano la roccia ospite che trasporta i ........ insieme a ... e ... di origine mantellica.]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[kimberliti, tonaliti, quarzo, diamanti, ooliti, xenocristalli]]></text></answer>
+    <answer fraction="0"><text><![CDATA[kimberliti, volatili, feldspati, pirosseni, ooliti, xenoliti]]></text></answer>
+    <answer fraction="100"><text><![CDATA[kimberliti, volatili, quarzo, diamanti, xenoliti, xenocristalli]]></text></answer>
+    <answer fraction="0"><text><![CDATA[nefeliniti, volatili, quarzo, diamanti, olistostromi, xenocristalli]]></text></answer>
+    <answer fraction="0"><text><![CDATA[carbonatiti, volatili, peridoto, diamanti, xenoliti, olistoliti]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila A - Domanda 9</text></name>
+    <questiontext format="html"><text><![CDATA[Riempi gli spazi con i termini giusti: I giacimenti di tipo greisen sono temporalmente e spazialmente associati a graniti e si formano nella parte ... dei plutoni granitici per circolazione di fluidi ... ricchi in ... e ... e poveri in ... Possono ritrovarsi come cupole, in ... o vene nei graniti o lenti.]]></text></questiontext>
+    <answer fraction="100"><text><![CDATA[apicale, idrotermali, Fluoro, Boro, Zolfo, brecce]]></text></answer>
+    <answer fraction="0"><text><![CDATA[basale, meteorici, Silice, Boro, Piombo, brecce]]></text></answer>
+    <answer fraction="0"><text><![CDATA[basale, epitermali, Fluoro, Boro, Ferro, vene]]></text></answer>
+    <answer fraction="0"><text><![CDATA[apicale, meteorici, fluoro, Boro, Piombo, pods.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[apicale, idrotermali, cloro, Boro, Piombo, brecce]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila A - Domanda 14</text></name>
+    <questiontext format="html"><text><![CDATA[In quale contesto geologico si trovano più comunemente i giacimenti di tipo skarn?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Bacini sedimentari anossici profondi]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Pianure alluvionali fluviali]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Ambienti glaciali continentali]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Zone di subduzione con intrusioni magmatiche che interagiscono con rocce carbonatiche]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Dorsali medio-oceaniche con attività basaltica]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+  <question type="multichoice">
+    <name><text>Fila A - Domanda 21</text></name>
+    <questiontext format="html"><text><![CDATA[Cosa sono magnetite ed ematite?]]></text></questiontext>
+    <answer fraction="0"><text><![CDATA[Nessuna delle precedenti.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono solfati di Ferro]]></text></answer>
+    <answer fraction="0"><text><![CDATA[Sono solfuri di Fe.]]></text></answer>
+    <answer fraction="100"><text><![CDATA[Sono minerali di Fe.]]></text></answer>
+    <answer fraction="0"><text><![CDATA[sono ossidi di rame]]></text></answer>
+    <shuffleanswers>true</shuffleanswers><single>true</single>
+  </question>
+</quiz>
+    </script>
+
+    <!-- LOGICA DELL'APP -->
+    <script>
+        // Costanti
+        const QUESTIONS_PER_LEVEL = 20;
+        
+        // Stato dell'app
+        let allLevels = []; // Array di array di domande
+        let currentLevelIndex = -1;
+        let currentQuestionIndex = 0;
+        let correctAnswersCount = 0;
+        let isQuestionAnswered = false;
+
+        // Inizializzazione sicura (Avvia l'app in qualsiasi ambiente)
+        function initApp() {
+            const container = document.getElementById('levels-container');
+            try {
+                if (container) container.innerHTML = '<p class="text-slate-500 col-span-full">Caricamento domande in corso...</p>';
+                
+                parseXMLData();
+                
+                if (allLevels.length === 0) {
+                    if (container) container.innerHTML = '<div class="col-span-full p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 font-medium">Errore: Nessuna domanda caricata. Verifica i dati XML.</div>';
+                } else {
+                    renderLevelButtons();
+                }
+            } catch(e) {
+                if (container) container.innerHTML = '<div class="col-span-full p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 font-medium">Errore di avvio: ' + e.message + '</div>';
+            }
+        }
+
+        // Controllo se il documento è già pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener("DOMContentLoaded", initApp);
+        } else {
+            initApp();
+        }
+
+        // 1. Parsing dell'XML (OTTIMIZZATO ANTICRASH)
+        function parseXMLData() {
+            allLevels = []; // Reset di sicurezza
+            
+            const xmlElement = document.getElementById('xml-data');
+            if (!xmlElement) {
+                throw new Error("Area dati XML non trovata.");
+            }
+            
+            const xmlString = xmlElement.textContent;
+            let parsedQuestions = [];
+
+            // Funzione interna per pulire i CDATA e gli spazi nascosti
+            const cleanText = (str) => {
+                let cleaned = str.trim();
+                if (cleaned.startsWith('<![CDATA[')) cleaned = cleaned.substring(9);
+                if (cleaned.endsWith(']]>')) cleaned = cleaned.substring(0, cleaned.length - 3);
+                return cleaned.trim();
+            };
+
+            // Usiamo le espressioni regolari (Regex) per aggirare il blocco
+            // ed evitare che l'app si blocchi per colpa dell'XML
+            const questionBlocks = xmlString.split(/<question type="multichoice">/gi);
+            
+            // Il ciclo parte da 1 perché l'indice 0 è il testo prima della prima domanda
+            for(let i = 1; i < questionBlocks.length; i++) {
+                const block = questionBlocks[i];
+                
+                // Estrae il nome (es: F0 - Domanda 2)
+                let name = "Domanda " + i;
+                const nameMatch = block.match(/<name>[\s\S]*?<text>([\s\S]*?)<\/text>[\s\S]*?<\/name>/i);
+                if (nameMatch) name = cleanText(nameMatch[1]);
+                
+                // Estrae il testo della domanda
+                let text = "";
+                const textMatch = block.match(/<questiontext[^>]*>[\s\S]*?<text>([\s\S]*?)<\/text>/i);
+                if (textMatch) text = cleanText(textMatch[1]);
+                
+                // Estrae le risposte e il punteggio
+                const answers = [];
+                const answerRegex = /<answer fraction="(\d+)"[^>]*>[\s\S]*?<text>([\s\S]*?)<\/text>/gi;
+                let match;
+                while ((match = answerRegex.exec(block)) !== null) {
+                    answers.push({
+                        isCorrect: match[1] === "100",
+                        text: cleanText(match[2])
+                    });
+                }
+                
+                // Se c'è una domanda valida, la salva
+                if (text && answers.length > 0) {
+                    parsedQuestions.push({ name, text, answers });
+                }
+            }
+            
+            if (parsedQuestions.length === 0) {
+                throw new Error("Impossibile trovare le domande. Verifica che i tag non siano cancellati.");
+            }
+
+            // Suddivisione matematica in livelli (Max 20 domande per blocco)
+            for (let i = 0; i < parsedQuestions.length; i += QUESTIONS_PER_LEVEL) {
+                allLevels.push(parsedQuestions.slice(i, i + QUESTIONS_PER_LEVEL));
+            }
+        }
+
+        // 2. Rendering Bottoni Livelli
+        function renderLevelButtons() {
+            const container = document.getElementById('levels-container');
+            container.innerHTML = ''; // Pulisce
+
+            allLevels.forEach((level, index) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-left p-4 rounded-xl transition-all shadow-sm group";
+                btn.onclick = () => startLevel(index);
+                
+                btn.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-lg text-slate-700 group-hover:text-blue-700">Livello ${index + 1}</span>
+                        <span class="bg-slate-200 text-slate-600 group-hover:bg-blue-200 group-hover:text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                            ${level.length} Q
+                        </span>
+                    </div>
+                    <div class="text-sm text-slate-500">Studia questo blocco di domande.</div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // 3. Gestione Navigazione Viste
+        function hideAllViews() {
+            document.getElementById('view-levels').classList.add('hidden');
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-results').classList.add('hidden');
+        }
+
+        function showLevels() {
+            hideAllViews();
+            document.getElementById('view-levels').classList.remove('hidden');
+        }
+
+        // 4. Avvio Quiz
+        function startLevel(index) {
+            currentLevelIndex = index;
+            currentQuestionIndex = 0;
+            correctAnswersCount = 0;
+            
+            hideAllViews();
+            document.getElementById('view-quiz').classList.remove('hidden');
+            
+            renderQuestion();
+        }
+
+        function retryLevel() {
+            startLevel(currentLevelIndex);
+        }
+
+        // 5. Utility per mescolare le risposte
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 6. Rendering Singola Domanda
+        function renderQuestion() {
+            isQuestionAnswered = false;
+            document.getElementById('quiz-controls').classList.add('hidden');
+            
+            const levelQuestions = allLevels[currentLevelIndex];
+            const q = levelQuestions[currentQuestionIndex];
+            
+            // Aggiorna progressi
+            document.getElementById('quiz-progress-text').innerText = `Domanda ${currentQuestionIndex + 1} di ${levelQuestions.length}`;
+            const progressPercent = ((currentQuestionIndex) / levelQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // Aggiorna testo
+            document.getElementById('question-id').innerHTML = `Livello ${currentLevelIndex + 1} <span class="mx-1">&bull;</span> ${q.name}`;
+            document.getElementById('question-text').innerHTML = q.text;
+
+            // Mescola le risposte copiandole per non alterare l'array originale
+            const answersToRender = [...q.answers];
+            shuffleArray(answersToRender);
+
+            // Genera bottoni risposte
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            answersToRender.forEach((ans, idx) => {
+                const btn = document.createElement('button');
+                // Salvo il valore di correttezza come data-attribute
+                btn.dataset.correct = ans.isCorrect;
+                
+                btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-slate-700 font-medium answer-btn";
+                
+                // Sostituisco eventuali tag HTML presenti nel testo della risposta per sicurezza
+                btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-slate-500 text-center text-sm leading-6 mr-3 font-bold">${String.fromCharCode(65 + idx)}</span> ${ans.text}`;
+                
+                btn.onclick = () => handleAnswerClick(btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // 7. Gestione Click Risposta
+        function handleAnswerClick(selectedBtn) {
+            if (isQuestionAnswered) return; // Evita doppi click
+            isQuestionAnswered = true;
+
+            const isCorrect = selectedBtn.dataset.correct === "true";
+            
+            if (isCorrect) {
+                correctAnswersCount++;
+                selectedBtn.classList.add('correct-answer');
+            } else {
+                selectedBtn.classList.add('wrong-answer');
+            }
+
+            // Mostra sempre qual era quella corretta, disabilita gli altri bottoni
+            const allBtns = document.querySelectorAll('.answer-btn');
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-slate-100');
+                btn.classList.add('cursor-not-allowed', 'opacity-70');
+                
+                // Se questo bottone era la risposta corretta (ma l'utente non l'ha cliccato)
+                if (btn.dataset.correct === "true" && btn !== selectedBtn) {
+                    btn.classList.add('correct-missed');
+                    btn.classList.remove('opacity-70');
+                }
+                // Lascia opacità piena al bottone cliccato
+                if (btn === selectedBtn) {
+                    btn.classList.remove('opacity-70');
+                }
+            });
+
+            // Mostra pulsante per la prossima domanda
+            document.getElementById('quiz-controls').classList.remove('hidden');
+        }
+
+        // 8. Prossima Domanda o Fine
+        function nextQuestion() {
+            const levelQuestions = allLevels[currentLevelIndex];
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < levelQuestions.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 9. Schermata Risultati
+        function showResults() {
+            hideAllViews();
+            const levelQuestions = allLevels[currentLevelIndex];
+            
+            document.getElementById('progress-bar').style.width = `100%`;
+            
+            document.getElementById('score-correct').innerText = correctAnswersCount;
+            document.getElementById('score-total').innerText = levelQuestions.length;
+            
+            document.getElementById('view-results').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
